@@ -1,0 +1,19 @@
+# Copie en hosts.yml (ignoré par git) une fois les IP connues,
+# ou laisse deploy.sh le générer depuis les outputs Terraform.
+all:
+  children:
+    k3s:
+      hosts:
+        k3s-node1:
+          ansible_host: 192.168.1.50
+          ansible_user: debian
+          ansible_ssh_private_key_file: ~/.ssh/id_ed25519_bootstrap
+    active_directory:
+      hosts:
+        ad-dc1:
+          ansible_host: 192.168.1.51
+          ansible_user: Administrator
+          ansible_connection: winrm
+          ansible_winrm_transport: ntlm
+          ansible_port: 5986
+          ansible_winrm_server_cert_validation: ignore

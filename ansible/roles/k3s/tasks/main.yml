@@ -1,0 +1,37 @@
+---
+# Roadmap J5 : installer k3s et récupérer un kubeconfig utilisable en local.
+
+- name: Vérifier si k3s est déjà installé
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_binary
+
+- name: Télécharger et installer k3s (script officiel)
+  ansible.builtin.shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} sh -s - \
+      --write-kubeconfig-mode 644 \
+      --disable traefik=false
+  when: not k3s_binary.stat.exists
+  # NB : Traefik reste activé par défaut (fourni avec k3s) pour l'ingress (roadmap J7).
+  # TODO (J8) : envisager --disable servicelb si un LoadBalancer externe est préféré plus tard.
+
+- name: Attendre que le noeud soit Ready
+  ansible.builtin.command: k3s kubectl get node -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}'
+  register: node_ready
+  until: node_ready.stdout == "True"
+  retries: 12
+  delay: 5
+  changed_when: false
+
+- name: Récupérer le kubeconfig généré
+  ansible.builtin.slurp:
+    src: /etc/rancher/k3s/k3s.yaml
+  register: kubeconfig_raw
+
+- name: Copier le kubeconfig en local (poste de pilotage)
+  ansible.builtin.copy:
+    content: "{{ (kubeconfig_raw.content | b64decode) | replace('127.0.0.1', ansible_host) }}"
+    dest: "{{ k3s_kubeconfig_local_path }}"
+    mode: "0600"
+  delegate_to: localhost
+  become: false

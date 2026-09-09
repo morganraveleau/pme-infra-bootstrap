@@ -1,0 +1,19 @@
+# Copie en all.yml (ignoré par git), ou laisse le formulaire web
+# (webapp-config/) le générer à partir des réponses de l'utilisateur.
+
+company_name: "acme"
+
+# --- k3s / applicatif ---
+webapp_domain: "app.acme.lab"
+webapp_enable_monitoring: true
+postgres_db_name: "acme_app"
+postgres_admin_password: "CHANGE-ME"
+
+# --- Active Directory ---
+ad_domain_name: "acme.lab"
+ad_domain_netbios_name: "ACME"
+ad_safe_mode_admin_password: "CHANGE-ME-TOO"
+
+# --- Monitoring ---
+grafana_admin_password: "CHANGE-ME-ALSO"
+prometheus_retention: "6h" # remonter à 15j+ une fois hors du budget RAM serré

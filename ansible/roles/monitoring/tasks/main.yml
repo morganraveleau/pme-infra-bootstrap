@@ -1,0 +1,32 @@
+---
+# Roadmap J8-J9 : kube-prometheus-stack via Helm, piloté par Ansible.
+
+- name: Ajouter le repo Helm prometheus-community
+  kubernetes.core.helm_repository:
+    name: prometheus-community
+    repo_url: https://prometheus-community.github.io/helm-charts
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: Déployer kube-prometheus-stack
+  kubernetes.core.helm:
+    name: monitoring
+    chart_ref: prometheus-community/kube-prometheus-stack
+    release_namespace: monitoring
+    create_namespace: true
+    values:
+      grafana:
+        adminPassword: "{{ grafana_admin_password }}"
+      prometheus:
+        prometheusSpec:
+          retention: "{{ prometheus_retention }}"
+          resources:
+            requests: { memory: "512Mi" }
+            limits: { memory: "1Gi" }
+      alertmanager:
+        enabled: "{{ webapp_enable_monitoring }}"
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+# TODO (J9) : ajouter un ConfigMap de dashboards Grafana custom (nodes/pods/appli)
+# et 1-2 PrometheusRule simples (ex: pod en CrashLoopBackOff).

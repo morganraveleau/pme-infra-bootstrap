@@ -1,0 +1,28 @@
+# Copie ce fichier en terraform.tfvars (ou laisse le formulaire web générer
+# terraform.tfvars.json à ta place) et remplis avec tes valeurs réelles.
+# Ce fichier est ignoré par git (voir .gitignore) — ne jamais committer de vrais secrets.
+
+pm_api_url           = "https://192.168.1.10:8006/api2/json"
+pm_api_token_id       = "terraform@pve!bootstrap"
+pm_api_token_secret   = "REMPLACE-MOI"
+pm_node               = "pve"
+company_name          = "acme"
+network_bridge        = "vmbr0"
+
+k3s_vm = {
+  template_id = 9000 # ID du template cloud-init Debian 12 (créé à la main, voir docs/architecture.md)
+  vcpu        = 2
+  memory_mb   = 4096
+  disk_gb     = 40
+  ip_address  = "192.168.1.50/24"
+  gateway     = "192.168.1.1"
+}
+
+ad_vm = {
+  template_id = 9001 # ID du template Windows Server (créé à la main)
+  vcpu        = 2
+  memory_mb   = 4096
+  disk_gb     = 80
+  ip_address  = "192.168.1.51/24"
+  gateway     = "192.168.1.1"
+}

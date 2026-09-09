@@ -1,0 +1,29 @@
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/terraform.tfvars
+terraform/terraform.tfvars.json
+terraform/crash.log
+
+# Ansible
+ansible/group_vars/all.yml
+ansible/inventory/hosts.yml
+*.retry
+
+# Secrets - ne jamais committer
+*.pem
+*.key
+webapp-config/generated/*
+!webapp-config/generated/.gitkeep
+
+# Python
+webapp-config/.venv/
+webapp-config/__pycache__/
+*.pyc
+
+# OS / éditeurs
+.DS_Store
+.vscode/
+*.swp

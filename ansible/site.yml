@@ -1,0 +1,22 @@
+---
+# Playbook principal, appelé par deploy.sh.
+# Ordre volontaire : k3s doit être up avant qu'on y déploie quoi que ce soit ;
+# l'AD peut être promu en parallèle mais on le fait après pour garder des logs lisibles en V1.
+
+- name: Configurer le noeud k3s
+  hosts: k3s
+  become: true
+  roles:
+    - k3s
+
+- name: Déployer la stack applicative et le monitoring dans k3s
+  hosts: k3s
+  become: true
+  roles:
+    - webapp
+    - monitoring
+
+- name: Promouvoir le contrôleur de domaine Active Directory
+  hosts: active_directory
+  roles:
+    - ad_domain_controller

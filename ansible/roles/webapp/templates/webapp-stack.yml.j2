@@ -1,0 +1,68 @@
+# Point de départ minimal : PostgreSQL + un conteneur placeholder pour l'appli.
+# À remplir en J6 avec la vraie appli (front+back) choisie.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-credentials
+type: Opaque
+stringData:
+  POSTGRES_DB: "{{ postgres_db_name }}"
+  POSTGRES_PASSWORD: "{{ postgres_admin_password }}"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: postgres }
+  template:
+    metadata:
+      labels: { app: postgres }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          envFrom:
+            - secretRef: { name: postgres-credentials }
+          ports:
+            - containerPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector: { app: postgres }
+  ports:
+    - port: 5432
+
+---
+# Placeholder appli web - à remplacer (J6) par le front+back réel.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-placeholder
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: webapp-placeholder }
+  template:
+    metadata:
+      labels: { app: webapp-placeholder }
+    spec:
+      containers:
+        - name: webapp
+          image: traefik/whoami
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-placeholder
+spec:
+  selector: { app: webapp-placeholder }
+  ports:
+    - port: 80

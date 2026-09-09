@@ -1,0 +1,27 @@
+---
+# Roadmap J10 : installer AD DS et promouvoir le contrôleur de domaine.
+# Nécessite la collection Ansible "ansible.windows" + "microsoft.ad"
+# (winrm configuré sur la VM, voir inventory/hosts.yml.example).
+
+- name: Installer la fonctionnalité AD Domain Services
+  ansible.windows.win_feature:
+    name: AD-Domain-Services
+    include_management_tools: true
+    state: present
+  register: install_adds
+
+- name: Promouvoir le serveur en contrôleur de domaine (nouvelle forêt)
+  microsoft.ad.domain:
+    dns_domain_name: "{{ ad_domain_name }}"
+    domain_netbios_name: "{{ ad_domain_netbios_name }}"
+    safe_mode_password: "{{ ad_safe_mode_admin_password }}"
+  register: promote_result
+
+- name: Redémarrer après la promotion
+  ansible.windows.win_reboot:
+    reboot_timeout: 600
+  when: promote_result.reboot_required | default(false)
+
+# TODO (J10) : ajouter une structure d'OU de base (Utilisateurs, Ordinateurs, Groupes)
+# et 1-2 utilisateurs/groupes d'exemple pour démontrer que l'annuaire fonctionne.
+# TODO (V2) : rôle WSUS séparé, sur une VM Windows dédiée (voir docs/architecture.md#backlog).

@@ -1,0 +1,24 @@
+---
+# Roadmap J6-J7 : déployer une stack front+back+bdd de démo dans k3s,
+# avec Traefik comme ingress. Le manifeste ci-dessous est un point de départ —
+# à remplacer par l'appli réelle choisie (Gitea, ou stack maison).
+
+- name: Créer le namespace applicatif
+  kubernetes.core.k8s:
+    name: webapp
+    api_version: v1
+    kind: Namespace
+    state: present
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: Déployer PostgreSQL + l'application de démo
+  kubernetes.core.k8s:
+    state: present
+    namespace: webapp
+    src: "{{ role_path }}/templates/webapp-stack.yml.j2"
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+# TODO (J6) : remplacer le manifeste par l'appli réellement choisie.
+# TODO (J7) : ajouter la ressource IngressRoute Traefik + certificat (mkcert ou self-signed).

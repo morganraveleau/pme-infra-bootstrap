@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Config Bootstrap Infra PME</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; color: #1b211d; }
+    fieldset { margin-bottom: 24px; border: 1px solid #d8dbd0; border-radius: 8px; padding: 16px; }
+    legend { font-weight: 600; padding: 0 6px; }
+    label { display: block; margin-top: 10px; font-size: 14px; }
+    input { width: 100%; padding: 7px 9px; margin-top: 4px; border: 1px solid #d8dbd0; border-radius: 5px; box-sizing: border-box; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+    button { margin-top: 20px; padding: 10px 18px; background: #b5622f; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; }
+    small { color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Config Bootstrap Infra PME</h1>
+  <p>Remplis ce formulaire une fois : il génère <code>terraform/terraform.tfvars.json</code> et <code>ansible/group_vars/all.yml</code>. Ensuite, lance <code>./deploy.sh</code> à la racine du dépôt.</p>
+
+  <form method="post" action="{{ url_for('generate') }}">
+    <fieldset>
+      <legend>Proxmox</legend>
+      <label>URL API (ex: https://192.168.1.10:8006/api2/json)
+        <input name="pm_api_url" required>
+      </label>
+      <div class="row">
+        <div><label>Token ID<input name="pm_api_token_id" placeholder="terraform@pve!bootstrap" required></label></div>
+        <div><label>Token secret<input name="pm_api_token_secret" type="password" required></label></div>
+      </div>
+      <label>Noeud Proxmox<input name="pm_node" placeholder="pve" required></label>
+      <label>Bridge réseau<input name="network_bridge" value="vmbr0"></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Entreprise</legend>
+      <label>Nom de la PME (préfixe des VMs)<input name="company_name" placeholder="acme" required></label>
+      <label>Domaine applicatif<input name="webapp_domain" placeholder="app.acme.lab" required></label>
+      <label><input type="checkbox" name="enable_monitoring" checked style="width:auto;display:inline"> Activer le monitoring (Prometheus/Grafana/Alertmanager)</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>VM k3s</legend>
+      <div class="row">
+        <div><label>ID template cloud-init<input name="k3s_template_id" type="number" value="9000" required></label></div>
+        <div><label>vCPU<input name="k3s_vcpu" type="number" value="2"></label></div>
+        <div><label>RAM (Mo)<input name="k3s_memory_mb" type="number" value="4096"></label></div>
+      </div>
+      <div class="row">
+        <div><label>Disque (Go)<input name="k3s_disk_gb" type="number" value="40"></label></div>
+        <div><label>IP (CIDR)<input name="k3s_ip_address" placeholder="192.168.1.50/24" required></label></div>
+        <div><label>Passerelle<input name="k3s_gateway" placeholder="192.168.1.1" required></label></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>VM Active Directory</legend>
+      <div class="row">
+        <div><label>ID template Windows<input name="ad_template_id" type="number" value="9001" required></label></div>
+        <div><label>vCPU<input name="ad_vcpu" type="number" value="2"></label></div>
+        <div><label>RAM (Mo)<input name="ad_memory_mb" type="number" value="4096"></label></div>
+      </div>
+      <div class="row">
+        <div><label>Disque (Go)<input name="ad_disk_gb" type="number" value="80"></label></div>
+        <div><label>IP (CIDR)<input name="ad_ip_address" placeholder="192.168.1.51/24" required></label></div>
+        <div><label>Passerelle<input name="ad_gateway" placeholder="192.168.1.1" required></label></div>
+      </div>
+      <label>Nom de domaine DNS<input name="ad_domain_name" placeholder="acme.lab" required></label>
+      <label>Nom NetBIOS<input name="ad_domain_netbios_name" placeholder="ACME" required></label>
+      <label>Mot de passe admin mode restauration (DSRM)<input name="ad_safe_mode_admin_password" type="password" required></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Secrets applicatifs</legend>
+      <small>V1 : stockés en clair dans les fichiers de config générés (ignorés par git). Vault/SOPS prévu en V2 — voir le backlog.</small>
+      <label>Nom base PostgreSQL<input name="postgres_db_name" value="acme_app" required></label>
+      <label>Mot de passe PostgreSQL<input name="postgres_admin_password" type="password" required></label>
+      <label>Mot de passe admin Grafana<input name="grafana_admin_password" type="password" required></label>
+      <label>Rétention Prometheus<input name="prometheus_retention" value="6h"></label>
+    </fieldset>
+
+    <button type="submit">Générer la configuration</button>
+  </form>
+</body>
+</html>
