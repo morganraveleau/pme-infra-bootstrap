@@ -20,7 +20,7 @@ provider "proxmox" {
 # Le provider déclenche un job de téléchargement via l'API Proxmox ;
 # Proxmox va lui-même chercher l'image sur internet.
 # ---------------------------------------------------------------------------
-resource "proxmox_virtual_environment_download_file" "debian12_cloud_image" {
+resource "proxmox_download_file" "debian12_cloud_image" {
   content_type        = "iso"
   datastore_id        = "local" # le stockage "local" (type dir) supporte le content-type iso
   node_name           = var.pm_node
@@ -60,7 +60,7 @@ resource "proxmox_virtual_environment_vm" "debian12_template" {
   # bpg/proxmox utilise SSH pour importer le disque via qm importdisk.
   disk {
     datastore_id = var.datastore
-    file_id      = proxmox_virtual_environment_download_file.debian12_cloud_image.id
+    file_id      = proxmox_download_file.debian12_cloud_image.id
     interface    = "scsi0"
     discard      = "on"
     size         = 8  # taille minimale ; le clone sera redimensionné à var.k3s_vm.disk_gb
