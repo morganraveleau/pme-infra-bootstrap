@@ -96,8 +96,8 @@ K3S_IP=$(terraform -chdir="$TF_DIR" output -raw k3s_node1_ip)
 AD_IP=$(terraform -chdir="$TF_DIR" output -raw ad_dc1_ip)
 
 if [[ ! -f "$ANSIBLE_DIR/inventory/hosts.yml" ]]; then
-  sed -e "s/192\.168\.1\.50/${K3S_IP}/" \
-      -e "s/192\.168\.1\.51/${AD_IP}/" \
+  sed -e "s/192\.168\.1\.11/${K3S_IP}/" \
+      -e "s/192\.168\.1\.20/${AD_IP}/" \
       "$ANSIBLE_DIR/inventory/hosts.yml.example" \
     > "$ANSIBLE_DIR/inventory/hosts.yml"
   info "Inventaire généré : ansible/inventory/hosts.yml"

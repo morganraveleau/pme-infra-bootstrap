@@ -66,3 +66,33 @@ spec:
   selector: { app: webapp-placeholder }
   ports:
     - port: 80
+---
+# Ingress (Traefik / k3s) — expose la webapp via HTTP sur le LAN
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webapp-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+    - host: "webapp.{{ ad_domain_name }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: webapp-placeholder
+                port:
+                  number: 80
+    # Fallback sans DNS configuré : accès direct par IP
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: webapp-placeholder
+                port:
+                  number: 80

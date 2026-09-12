@@ -13,7 +13,7 @@ all:
           ansible_host: "192.168.1.11"       # → terraform output k3s_ip
           ansible_user: debian
           ansible_become: true
-          ansible_ssh_private_key_file: "~/.ssh/id_rsa"
+          ansible_ssh_private_key_file: "~/.ssh/id_ed25519_bootstrap"
 
     # ── Contrôleur de domaine Active Directory (Windows Server 2022) ─────────
     active_directory:
