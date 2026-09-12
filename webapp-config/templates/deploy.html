@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Déploiement en cours — Bootstrap Infra PME</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+  --border: #2d3250; --accent: #6c63ff; --accent2: #4ecdc4;
+  --success: #43d17a; --warn: #f7b731; --danger: #fc5c65;
+  --text: #e8eaf6; --muted: #8892b0; --white: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif;
+       min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── Header ── */
+.header { padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem;
+          border-bottom: 1px solid var(--border); }
+.header .logo { font-size: 1.6rem; }
+.header-text h1 { font-size: 1.2rem; font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header-text p { font-size: .8rem; color: var(--muted); }
+.status-badge { margin-left: auto; padding: .4rem .9rem; border-radius: 20px;
+  font-size: .8rem; font-weight: 600; display: flex; align-items: center; gap: .4rem; }
+.status-badge.running { background: rgba(108,99,255,.15); color: var(--accent);
+  border: 1px solid rgba(108,99,255,.3); }
+.status-badge.success { background: rgba(67,209,122,.15); color: var(--success);
+  border: 1px solid rgba(67,209,122,.3); }
+.status-badge.error { background: rgba(252,92,101,.15); color: var(--danger);
+  border: 1px solid rgba(252,92,101,.3); }
+
+/* ── Main layout ── */
+.main { display: grid; grid-template-columns: 300px 1fr; gap: 0; flex: 1;
+        min-height: 0; }
+
+/* ── Left: Step timeline ── */
+.sidebar { border-right: 1px solid var(--border); padding: 1.5rem; overflow-y: auto; }
+.sidebar h3 { font-size: .75rem; font-weight: 600; color: var(--muted);
+              text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1.2rem; }
+
+.step-item { display: flex; gap: .9rem; align-items: flex-start;
+             padding: .7rem .8rem; border-radius: 10px; margin-bottom: .3rem;
+             cursor: default; transition: background .2s; position: relative; }
+.step-item:not(:last-child)::after {
+  content: ''; position: absolute; left: 21px; top: 44px; width: 2px;
+  height: calc(100% - 12px + .3rem); background: var(--border); z-index: 0; }
+.step-item.done:not(:last-child)::after { background: var(--success); }
+.step-item.active:not(:last-child)::after { background: var(--accent); }
+
+.step-icon-wrap { width: 30px; height: 30px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0; z-index: 1;
+  border: 2px solid var(--border); background: var(--surface2); transition: all .3s; }
+.step-icon-wrap .material-icons-round { font-size: 1rem; color: var(--muted); }
+.step-item.active .step-icon-wrap { border-color: var(--accent); background: rgba(108,99,255,.2); }
+.step-item.active .step-icon-wrap .material-icons-round { color: var(--accent); }
+.step-item.done .step-icon-wrap { border-color: var(--success); background: rgba(67,209,122,.2); }
+.step-item.done .step-icon-wrap .material-icons-round { color: var(--success); }
+.step-item.error .step-icon-wrap { border-color: var(--danger); background: rgba(252,92,101,.2); }
+.step-item.error .step-icon-wrap .material-icons-round { color: var(--danger); }
+
+.step-info { flex: 1; }
+.step-name { font-size: .85rem; font-weight: 500; color: var(--muted); }
+.step-item.active .step-name { color: var(--white); font-weight: 600; }
+.step-item.done .step-name { color: var(--success); }
+.step-item.error .step-name { color: var(--danger); }
+.step-time { font-size: .72rem; color: var(--muted); margin-top: .15rem;
+             font-family: 'JetBrains Mono', monospace; }
+
+/* Spinner for active step */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(108,99,255,.3);
+           border-top-color: var(--accent); border-radius: 50%;
+           animation: spin 0.7s linear infinite; }
+
+/* ── Progress bar ── */
+.progress-wrap { padding: 1rem 1.5rem; border-right: 1px solid var(--border);
+                 border-bottom: 1px solid var(--border); background: var(--surface); }
+.progress-bar-bg { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 3px; transition: width .5s ease;
+  background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0%; }
+.progress-label { font-size: .75rem; color: var(--muted); margin-top: .4rem;
+  display: flex; justify-content: space-between; }
+
+/* ── Right: Log terminal ── */
+.log-area { display: flex; flex-direction: column; min-height: 0; }
+.log-toolbar { padding: .8rem 1.2rem; border-bottom: 1px solid var(--border);
+               display: flex; align-items: center; gap: .8rem;
+               background: var(--surface); }
+.log-toolbar h3 { font-size: .8rem; font-weight: 600; color: var(--muted);
+                  text-transform: uppercase; letter-spacing: .08em; }
+.btn-sm { padding: .3rem .7rem; border-radius: 6px; border: 1px solid var(--border);
+          background: transparent; color: var(--muted); font-size: .75rem; cursor: pointer;
+          display: flex; align-items: center; gap: .3rem; transition: all .2s; }
+.btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+.btn-sm .material-icons-round { font-size: .9rem; }
+.log-lines { flex: 1; overflow-y: auto; padding: 1rem 1.2rem;
+             font-family: 'JetBrains Mono', monospace; font-size: .78rem;
+             line-height: 1.6; background: #080b14; min-height: 300px; }
+.log-line { margin-bottom: .1rem; white-space: pre-wrap; word-break: break-all; }
+.log-line.log-error { color: var(--danger); }
+.log-line.log-warn  { color: var(--warn); }
+.log-line.log-info  { color: var(--accent2); }
+.log-line.log-ok    { color: var(--success); }
+.log-line.log-step  { color: var(--accent); font-weight: 500; }
+.log-line.log-default { color: #a8b2d8; }
+.log-cursor { display: inline-block; width: 8px; height: 14px;
+              background: var(--accent); animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ── VM Status Dashboard ── */
+.vm-section { padding: 1.5rem; border-top: 1px solid var(--border); }
+.vm-section h3 { font-size: .8rem; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1rem; }
+.vm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .8rem; }
+.vm-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+           padding: 1rem; transition: border-color .3s; }
+.vm-card.running { border-color: rgba(67,209,122,.4); }
+.vm-card.stopped { border-color: rgba(247,183,49,.3); }
+.vm-card.absent  { border-color: var(--border); opacity: .6; }
+.vm-card-header { display: flex; align-items: center; gap: .6rem; margin-bottom: .8rem; }
+.vm-card-icon { width: 32px; height: 32px; border-radius: 8px; display: flex;
+  align-items: center; justify-content: center; background: var(--surface2); }
+.vm-card-icon .material-icons-round { font-size: 1.1rem; color: var(--muted); }
+.vm-card.running .vm-card-icon .material-icons-round { color: var(--success); }
+.vm-card-name { font-size: .82rem; font-weight: 600; color: var(--white); }
+.vm-card-role { font-size: .7rem; color: var(--muted); }
+.vm-status-dot { width: 8px; height: 8px; border-radius: 50%; margin-left: auto; }
+.vm-status-dot.running { background: var(--success); box-shadow: 0 0 6px var(--success); }
+.vm-status-dot.stopped { background: var(--warn); }
+.vm-status-dot.absent  { background: var(--muted); }
+.vm-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.vm-metric { background: var(--surface2); border-radius: 6px; padding: .4rem .6rem; }
+.vm-metric-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; }
+.vm-metric-val { font-size: .9rem; font-weight: 600; color: var(--text);
+  font-family: 'JetBrains Mono', monospace; margin-top: .1rem; }
+
+/* ── Final result banner ── */
+.result-banner { margin: 1.5rem; padding: 1.2rem 1.5rem; border-radius: 12px;
+                 display: none; align-items: center; gap: 1rem; }
+.result-banner.success { background: rgba(67,209,122,.1); border: 1px solid rgba(67,209,122,.3); }
+.result-banner.error   { background: rgba(252,92,101,.1); border: 1px solid rgba(252,92,101,.3); }
+.result-banner .material-icons-round { font-size: 2rem; }
+.result-banner.success .material-icons-round { color: var(--success); }
+.result-banner.error   .material-icons-round { color: var(--danger); }
+.result-banner h2 { font-size: 1rem; font-weight: 700; }
+.result-banner p  { font-size: .85rem; color: var(--muted); margin-top: .2rem; }
+.btn-primary { padding: .6rem 1.4rem; border-radius: 8px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), #5a54d4); color: #fff;
+  font-size: .85rem; font-weight: 600; transition: opacity .2s; display: inline-flex;
+  align-items: center; gap: .4rem; }
+.btn-primary:hover { opacity: .85; }
+.btn-primary .material-icons-round { font-size: 1rem; }
+
+/* ── Timer ── */
+.elapsed { font-family: 'JetBrains Mono', monospace; font-size: .8rem;
+           color: var(--muted); margin-left: auto; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main { grid-template-columns: 1fr; }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">🚀</div>
+  <div class="header-text">
+    <h1>Bootstrap Infra PME</h1>
+    <p>Déploiement de l'infrastructure en cours</p>
+  </div>
+  <span id="statusBadge" class="status-badge running">
+    <span class="material-icons-round" style="font-size:.9rem">radio_button_checked</span>
+    En cours…
+  </span>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Left sidebar: step timeline -->
+  <div class="sidebar">
+    <h3>Étapes</h3>
+    <div class="progress-wrap" style="margin: 0 -.5rem .8rem; padding: .6rem .5rem;">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+      <div class="progress-label">
+        <span id="progressLabel">0%</span>
+        <span class="elapsed" id="elapsed">00:00</span>
+      </div>
+    </div>
+
+    <div id="stepList">
+      <!-- injected by JS from STEPS -->
+    </div>
+  </div>
+
+  <!-- Right: log terminal -->
+  <div class="log-area">
+    <div class="log-toolbar">
+      <h3><span class="material-icons-round" style="font-size:.9rem;vertical-align:middle">terminal</span>
+        &nbsp;Journaux temps réel</h3>
+      <button class="btn-sm" onclick="toggleAutoScroll()">
+        <span class="material-icons-round" id="autoScrollIcon">lock</span>
+        <span id="autoScrollLabel">Auto-scroll</span>
+      </button>
+      <button class="btn-sm" onclick="copyLogs()">
+        <span class="material-icons-round">content_copy</span> Copier
+      </button>
+    </div>
+    <div class="log-lines" id="logLines">
+      <div class="log-line log-info">Connexion au serveur de déploiement…</div>
+      <span class="log-cursor" id="cursor"></span>
+    </div>
+
+    <!-- VM dashboard (shown after success) -->
+    <div class="vm-section" id="vmSection" style="display:none">
+      <h3><span class="material-icons-round" style="font-size:.85rem;vertical-align:middle">dns</span>
+        &nbsp;État des machines virtuelles</h3>
+      <div class="vm-grid" id="vmGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Result banner -->
+<div class="result-banner" id="resultBanner">
+  <span class="material-icons-round" id="resultIcon">check_circle</span>
+  <div>
+    <h2 id="resultTitle"></h2>
+    <p id="resultMsg"></p>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:.6rem;flex-wrap:wrap">
+    <a href="/" class="btn-primary" id="restartBtn" style="display:none">
+      <span class="material-icons-round">refresh</span> Nouveau déploiement
+    </a>
+  </div>
+</div>
+
+<script>
+/* ─── Steps (must match app.py STEPS) ─── */
+const STEPS = [
+  { id:'config',    label:'Configuration générée',          icon:'settings'      },
+  { id:'prereqs',   label:'Vérification des prérequis',     icon:'search'        },
+  { id:'iso',       label:'Téléchargement ISO Windows',      icon:'download'      },
+  { id:'template',  label:'Construction template Windows',   icon:'build'         },
+  { id:'terraform', label:'Provisionnement VMs',            icon:'dns'           },
+  { id:'k3s',       label:'Installation k3s + applicatif',  icon:'hub'           },
+  { id:'ad',        label:'Configuration Active Directory',  icon:'corporate_fare'},
+  { id:'done',      label:'Infrastructure prête !',          icon:'check_circle'  },
+];
+
+const STEP_INDEX = {};
+STEPS.forEach((s,i) => STEP_INDEX[s.id] = i);
+const stepTimes = {};
+let currentStepIdx = -1;
+let deployDone = false;
+let autoScroll = true;
+
+/* ─── Render step list ─── */
+const stepList = document.getElementById('stepList');
+STEPS.forEach((s, i) => {
+  const el = document.createElement('div');
+  el.className = 'step-item';
+  el.id = 'step-' + s.id;
+  el.innerHTML = `
+    <div class="step-icon-wrap" id="icon-${s.id}">
+      <span class="material-icons-round">${s.icon}</span>
+    </div>
+    <div class="step-info">
+      <div class="step-name">${s.label}</div>
+      <div class="step-time" id="time-${s.id}">En attente…</div>
+    </div>`;
+  stepList.appendChild(el);
+});
+
+/* ─── Progress bar ─── */
+function updateProgress(stepId) {
+  const idx = STEP_INDEX[stepId] ?? -1;
+  if (idx < 0) return;
+  const pct = Math.round(((idx + 1) / STEPS.length) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = pct + '%';
+}
+
+/* ─── Elapsed timer ─── */
+const startTs = Date.now();
+const elapsedEl = document.getElementById('elapsed');
+setInterval(() => {
+  if (deployDone) return;
+  const sec = Math.floor((Date.now() - startTs) / 1000);
+  const m = String(Math.floor(sec / 60)).padStart(2,'0');
+  const s = String(sec % 60).padStart(2,'0');
+  elapsedEl.textContent = m + ':' + s;
+}, 1000);
+
+/* ─── Step activation ─── */
+function activateStep(stepId) {
+  const idx = STEP_INDEX[stepId];
+  if (idx === undefined) return;
+
+  // Mark previous steps as done
+  for (let i = 0; i < idx; i++) {
+    const s = STEPS[i];
+    const el = document.getElementById('step-' + s.id);
+    if (!el.classList.contains('done')) {
+      el.classList.remove('active');
+      el.classList.add('done');
+      const iconWrap = document.getElementById('icon-' + s.id);
+      iconWrap.innerHTML = '<span class="material-icons-round">check_circle</span>';
+      const timeEl = document.getElementById('time-' + s.id);
+      if (timeEl.textContent === 'En attente…') timeEl.textContent = '✓ Terminé';
+    }
+  }
+
+  // Activate current
+  const cur = document.getElementById('step-' + stepId);
+  cur.classList.remove('done', 'error');
+  cur.classList.add('active');
+  const iconWrap = document.getElementById('icon-' + stepId);
+  iconWrap.innerHTML = '<div class="spinner"></div>';
+  stepTimes[stepId] = Date.now();
+  document.getElementById('time-' + stepId).textContent = 'En cours…';
+
+  currentStepIdx = idx;
+  updateProgress(stepId);
+
+  // scroll step into view
+  cur.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function completeStep(stepId, ok) {
+  const el = document.getElementById('step-' + stepId);
+  if (!el) return;
+  el.classList.remove('active');
+  el.classList.add(ok ? 'done' : 'error');
+  const iconWrap = document.getElementById('icon-' + stepId);
+  iconWrap.innerHTML = ok
+    ? '<span class="material-icons-round">check_circle</span>'
+    : '<span class="material-icons-round">error</span>';
+  const elapsed = stepTimes[stepId] ? Math.round((Date.now() - stepTimes[stepId]) / 1000) : 0;
+  document.getElementById('time-' + stepId).textContent = ok
+    ? '✓ ' + elapsed + 's'
+    : '✗ Échec après ' + elapsed + 's';
+}
+
+/* ─── Log terminal ─── */
+const logLines = document.getElementById('logLines');
+const cursor   = document.getElementById('cursor');
+
+function classifyLine(msg) {
+  if (!msg) return 'log-default';
+  const m = msg.toLowerCase();
+  if (msg.includes('✗') || m.includes('error') || m.includes('echec') || m.includes('failed') || m.includes('fatal')) return 'log-error';
+  if (msg.includes('⚠') || m.includes('warn')) return 'log-warn';
+  if (msg.includes('✓') || msg.includes('==>') || msg.includes('ok') && msg.length < 20) return 'log-ok';
+  if (msg.startsWith('==>') || msg.startsWith('TASK') || msg.startsWith('PLAY')) return 'log-step';
+  return 'log-default';
+}
+
+function addLog(msg, cls) {
+  cursor.remove();
+  const line = document.createElement('div');
+  line.className = 'log-line ' + (cls || classifyLine(msg));
+  line.textContent = msg;
+  logLines.appendChild(line);
+  logLines.appendChild(cursor);
+  if (autoScroll) logLines.scrollTop = logLines.scrollHeight;
+
+  // Limit to 2000 lines for performance
+  const lines = logLines.querySelectorAll('.log-line');
+  if (lines.length > 2000) lines[0].remove();
+}
+
+/* ─── Auto-scroll toggle ─── */
+function toggleAutoScroll() {
+  autoScroll = !autoScroll;
+  document.getElementById('autoScrollIcon').textContent = autoScroll ? 'lock' : 'lock_open';
+  document.getElementById('autoScrollLabel').textContent = autoScroll ? 'Auto-scroll' : 'Fixé';
+  if (autoScroll) logLines.scrollTop = logLines.scrollHeight;
+}
+logLines.addEventListener('scroll', () => {
+  const atBottom = logLines.scrollTop + logLines.clientHeight >= logLines.scrollHeight - 20;
+  if (!atBottom && autoScroll) {
+    autoScroll = false;
+    document.getElementById('autoScrollIcon').textContent = 'lock_open';
+    document.getElementById('autoScrollLabel').textContent = 'Fixé';
+  }
+});
+
+/* ─── Copy logs ─── */
+function copyLogs() {
+  const text = Array.from(logLines.querySelectorAll('.log-line'))
+    .map(l => l.textContent).join('\n');
+  navigator.clipboard.writeText(text).catch(() => {});
+}
+
+/* ─── VM Status ─── */
+const VM_ICONS = {
+  'Template Debian 12': 'computer',
+  'Template Windows':   'window',
+  'k3s (Kubernetes)':   'hub',
+  'Active Directory DC':'corporate_fare',
+};
+
+function renderVMs(vms) {
+  const grid = document.getElementById('vmGrid');
+  grid.innerHTML = '';
+  vms.forEach(vm => {
+    const card = document.createElement('div');
+    const st = vm.status;
+    card.className = 'vm-card ' + st;
+    const icon = VM_ICONS[vm.role] || 'dns';
+    const cpuStr  = st === 'running' ? vm.cpu + '%' : '—';
+    const memStr  = st === 'running' ? vm.mem + '/' + vm.maxmem + ' GB' : '—';
+    const statusLabel = st === 'running' ? 'Actif' : st === 'absent' ? 'Non créé' : 'Arrêté';
+    card.innerHTML = `
+      <div class="vm-card-header">
+        <div class="vm-card-icon"><span class="material-icons-round">${icon}</span></div>
+        <div>
+          <div class="vm-card-name">${vm.name}</div>
+          <div class="vm-card-role">${vm.role}</div>
+        </div>
+        <div class="vm-status-dot ${st}"></div>
+      </div>
+      <div class="vm-metrics">
+        <div class="vm-metric">
+          <div class="vm-metric-label">Statut</div>
+          <div class="vm-metric-val" style="font-size:.8rem">${statusLabel}</div>
+        </div>
+        <div class="vm-metric">
+          <div class="vm-metric-label">ID</div>
+          <div class="vm-metric-val">${vm.id ?? '—'}</div>
+        </div>
+        <div class="vm-metric">
+          <div class="vm-metric-label">CPU</div>
+          <div class="vm-metric-val">${cpuStr}</div>
+        </div>
+        <div class="vm-metric">
+          <div class="vm-metric-label">RAM</div>
+          <div class="vm-metric-val" style="font-size:.7rem">${memStr}</div>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+  document.getElementById('vmSection').style.display = 'block';
+}
+
+/* ─── Fetch final VM status ─── */
+function fetchVMStatus() {
+  fetch('/api/status')
+    .then(r => r.json())
+    .then(data => {
+      if (data.vms && data.vms.length) renderVMs(data.vms);
+    }).catch(() => {});
+}
+
+/* ─── Deployment done ─── */
+function onDeployDone(success) {
+  deployDone = true;
+  cursor.style.display = 'none';
+
+  const badge = document.getElementById('statusBadge');
+  badge.className = 'status-badge ' + (success ? 'success' : 'error');
+  badge.innerHTML = success
+    ? '<span class="material-icons-round" style="font-size:.9rem">check_circle</span> Terminé'
+    : '<span class="material-icons-round" style="font-size:.9rem">error</span> Échec';
+
+  // Mark remaining steps
+  STEPS.forEach(s => {
+    const el = document.getElementById('step-' + s.id);
+    if (el.classList.contains('active')) completeStep(s.id, success);
+    else if (!el.classList.contains('done') && !el.classList.contains('error')) {
+      if (success) {
+        el.classList.add('done');
+        document.getElementById('icon-' + s.id).innerHTML =
+          '<span class="material-icons-round">check_circle</span>';
+        document.getElementById('time-' + s.id).textContent = '✓ Terminé';
+      }
+    }
+  });
+
+  if (success) {
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressLabel').textContent = '100%';
+    // Poll VM status after a short delay
+    setTimeout(fetchVMStatus, 2000);
+    setTimeout(fetchVMStatus, 8000);
+  }
+
+  const banner = document.getElementById('resultBanner');
+  banner.className = 'result-banner ' + (success ? 'success' : 'error');
+  banner.style.display = 'flex';
+  document.getElementById('resultIcon').textContent = success ? 'check_circle' : 'cancel';
+  document.getElementById('resultTitle').textContent = success
+    ? '🎉 Infrastructure déployée avec succès !'
+    : '❌ Le déploiement a échoué';
+  document.getElementById('resultMsg').textContent = success
+    ? 'Toutes les VMs sont opérationnelles. Connectez-vous à Proxmox pour vérifier.'
+    : 'Consultez les journaux ci-dessus pour identifier l\'erreur et relancez.';
+  document.getElementById('restartBtn').style.display = 'inline-flex';
+}
+
+/* ─── SSE connection ─── */
+let evtSource;
+let reconnectDelay = 1000;
+let reconnectTimer = null;
+
+function connect() {
+  evtSource = new EventSource('/stream');
+
+  evtSource.onopen = () => {
+    reconnectDelay = 1000;
+    addLog('⚡ Connecté au serveur de déploiement', 'log-ok');
+  };
+
+  evtSource.onmessage = (e) => {
+    let data;
+    try { data = JSON.parse(e.data); } catch { return; }
+
+    if (data.type === 'connected') {
+      addLog('⚡ Flux SSE établi', 'log-ok');
+    } else if (data.type === 'log') {
+      addLog(data.message);
+    } else if (data.type === 'error') {
+      addLog(data.message, 'log-error');
+    } else if (data.type === 'step') {
+      activateStep(data.step);
+    } else if (data.type === 'ping') {
+      /* heartbeat — ignore */
+    } else if (data.type === 'done') {
+      onDeployDone(data.success);
+      evtSource.close();
+    }
+  };
+
+  evtSource.onerror = () => {
+    evtSource.close();
+    if (!deployDone) {
+      addLog('⚠ Connexion perdue — reconnexion dans ' + (reconnectDelay/1000) + 's…', 'log-warn');
+      reconnectTimer = setTimeout(() => {
+        reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+        connect();
+      }, reconnectDelay);
+    }
+  };
+}
+
+connect();
+</script>
+</body>
+</html>

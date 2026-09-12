@@ -1,0 +1,21 @@
+# =============================================================================
+# Bootstrap Infra PME — docker-compose
+# Usage : docker compose up  (puis ouvrir http://localhost:5000)
+# =============================================================================
+services:
+  bootstrap:
+    build: .
+    image: pme-bootstrap:latest
+    container_name: pme-bootstrap
+    ports:
+      - "5000:5000"
+    volumes:
+      # Monte le dépôt courant dans le conteneur (les configs générées sont persistées)
+      - .:/workspace
+      # Monte la clé SSH de la machine hôte pour accéder à Proxmox
+      - ${SSH_KEY_PATH:-~/.ssh}:/root/.ssh:ro
+    environment:
+      - TF_DATA_DIR=/root/.terraform-data/pme-infra-bootstrap
+      - FLASK_ENV=production
+    network_mode: host   # le conteneur voit directement le réseau local (accès Proxmox)
+    restart: unless-stopped

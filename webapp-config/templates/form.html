@@ -1,86 +1,416 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <title>Config Bootstrap Infra PME</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; color: #1b211d; }
-    fieldset { margin-bottom: 24px; border: 1px solid #d8dbd0; border-radius: 8px; padding: 16px; }
-    legend { font-weight: 600; padding: 0 6px; }
-    label { display: block; margin-top: 10px; font-size: 14px; }
-    input { width: 100%; padding: 7px 9px; margin-top: 4px; border: 1px solid #d8dbd0; border-radius: 5px; box-sizing: border-box; }
-    .row { display: flex; gap: 12px; }
-    .row > div { flex: 1; }
-    button { margin-top: 20px; padding: 10px 18px; background: #b5622f; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; }
-    small { color: #666; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bootstrap Infra PME</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+  --border: #2d3250; --accent: #6c63ff; --accent2: #4ecdc4;
+  --success: #43d17a; --warn: #f7b731; --danger: #fc5c65;
+  --text: #e8eaf6; --muted: #8892b0; --white: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif;
+       min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+       padding: 2rem 1rem; }
+
+/* ── Header ── */
+.header { text-align: center; margin-bottom: 2.5rem; }
+.logo { font-size: 2rem; margin-bottom: .5rem; }
+h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2));
+     -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.subtitle { color: var(--muted); font-size: .9rem; margin-top: .4rem; }
+
+/* ── Progress bar ── */
+.stepper { display: flex; gap: 0; margin-bottom: 2.5rem; width: 100%; max-width: 700px; }
+.step-dot { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+.step-dot:not(:last-child)::after {
+  content: ''; position: absolute; top: 16px; left: 50%; width: 100%; height: 2px;
+  background: var(--border); z-index: 0; transition: background .3s;
+}
+.step-dot.done:not(:last-child)::after { background: var(--accent); }
+.dot { width: 32px; height: 32px; border-radius: 50%; background: var(--surface2);
+       border: 2px solid var(--border); display: flex; align-items: center; justify-content: center;
+       font-size: .75rem; font-weight: 700; z-index: 1; transition: all .3s; color: var(--muted); }
+.step-dot.active .dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+.step-dot.done .dot { background: var(--success); border-color: var(--success); color: #fff; }
+.step-label { font-size: .7rem; color: var(--muted); margin-top: .4rem; text-align: center; }
+.step-dot.active .step-label { color: var(--accent); font-weight: 600; }
+
+/* ── Card ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+        padding: 2rem; width: 100%; max-width: 700px; }
+.card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem;
+              display: flex; align-items: center; gap: .6rem; color: var(--white); }
+.card-title .material-icons-round { color: var(--accent); font-size: 1.3rem; }
+
+/* ── Form ── */
+.form-section { display: none; }
+.form-section.active { display: block; animation: fadeIn .3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.field-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+@media(max-width:560px) { .field-row, .field-row.triple { grid-template-columns: 1fr; } }
+
+.field { margin-bottom: 1.2rem; }
+label { display: block; font-size: .8rem; font-weight: 500; color: var(--muted);
+        text-transform: uppercase; letter-spacing: .05em; margin-bottom: .4rem; }
+label .req { color: var(--danger); }
+input, select {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: .65rem 1rem; color: var(--text); font-family: inherit;
+  font-size: .9rem; transition: border-color .2s, box-shadow .2s; outline: none;
+}
+input:focus, select:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,99,255,.15);
+}
+input[type=password] { font-family: 'JetBrains Mono', monospace; letter-spacing: .1em; }
+.hint { font-size: .75rem; color: var(--muted); margin-top: .3rem; }
+
+.section-title { font-size: .85rem; font-weight: 600; color: var(--accent2);
+                 text-transform: uppercase; letter-spacing: .08em; margin: 1.5rem 0 1rem;
+                 padding-bottom: .4rem; border-bottom: 1px solid var(--border); }
+
+/* ── Buttons ── */
+.btn-row { display: flex; justify-content: space-between; margin-top: 1.8rem; gap: 1rem; }
+.btn { padding: .7rem 1.8rem; border-radius: 8px; font-size: .9rem; font-weight: 600;
+       cursor: pointer; border: none; transition: all .2s; display: inline-flex;
+       align-items: center; gap: .4rem; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #5851d8; transform: translateY(-1px); box-shadow: 0 4px 15px rgba(108,99,255,.4); }
+.btn-success { background: var(--success); color: #111; }
+.btn-success:hover { opacity: .9; transform: translateY(-1px); }
+
+/* ── Résumé ── */
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+@media(max-width:500px) { .summary-grid { grid-template-columns: 1fr; } }
+.summary-item { background: var(--surface2); border-radius: 8px; padding: .8rem 1rem; }
+.summary-item .key { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.summary-item .val { font-size: .9rem; font-weight: 500; margin-top: .2rem; color: var(--text); }
+.summary-item .val.mono { font-family: 'JetBrains Mono', monospace; font-size: .82rem; }
+.badge { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .6rem;
+         border-radius: 20px; font-size: .72rem; font-weight: 600; }
+.badge-vm { background: rgba(108,99,255,.15); color: var(--accent); }
+.badge-win { background: rgba(0,120,215,.15); color: #5aacff; }
+
+.warn-box { background: rgba(247,183,49,.07); border: 1px solid rgba(247,183,49,.3);
+            border-radius: 8px; padding: .8rem 1rem; margin: 1rem 0;
+            font-size: .82rem; color: var(--warn); display: flex; gap: .5rem; align-items: flex-start; }
+</style>
 </head>
 <body>
-  <h1>Config Bootstrap Infra PME</h1>
-  <p>Remplis ce formulaire une fois : il génère <code>terraform/terraform.tfvars.json</code> et <code>ansible/group_vars/all.yml</code>. Ensuite, lance <code>./deploy.sh</code> à la racine du dépôt.</p>
 
-  <form method="post" action="{{ url_for('generate') }}">
-    <fieldset>
-      <legend>Proxmox</legend>
-      <label>URL API (ex: https://192.168.1.10:8006/api2/json)
-        <input name="pm_api_url" required>
-      </label>
-      <div class="row">
-        <div><label>Token ID<input name="pm_api_token_id" placeholder="terraform@pve!bootstrap" required></label></div>
-        <div><label>Token secret<input name="pm_api_token_secret" type="password" required></label></div>
-      </div>
-      <label>Noeud Proxmox<input name="pm_node" placeholder="pve" required></label>
-      <label>Bridge réseau<input name="network_bridge" value="vmbr0"></label>
-    </fieldset>
+<div class="header">
+  <div class="logo">🏗️</div>
+  <h1>Bootstrap Infra PME</h1>
+  <p class="subtitle">Configurez votre infrastructure en quelques clics — déploiement entièrement automatisé</p>
+</div>
 
-    <fieldset>
-      <legend>Entreprise</legend>
-      <label>Nom de la PME (préfixe des VMs)<input name="company_name" placeholder="acme" required></label>
-      <label>Domaine applicatif<input name="webapp_domain" placeholder="app.acme.lab" required></label>
-      <label><input type="checkbox" name="enable_monitoring" checked style="width:auto;display:inline"> Activer le monitoring (Prometheus/Grafana/Alertmanager)</label>
-    </fieldset>
+<!-- Stepper -->
+<div class="stepper">
+  <div class="step-dot active" id="sdot-1"><div class="dot">1</div><div class="step-label">Proxmox</div></div>
+  <div class="step-dot" id="sdot-2"><div class="dot">2</div><div class="step-label">Infrastructure</div></div>
+  <div class="step-dot" id="sdot-3"><div class="dot">3</div><div class="step-label">Services</div></div>
+  <div class="step-dot" id="sdot-4"><div class="dot">4</div><div class="step-label">Confirmation</div></div>
+</div>
 
-    <fieldset>
-      <legend>VM k3s</legend>
-      <div class="row">
-        <div><label>ID template cloud-init<input name="k3s_template_id" type="number" value="9000" required></label></div>
-        <div><label>vCPU<input name="k3s_vcpu" type="number" value="2"></label></div>
-        <div><label>RAM (Mo)<input name="k3s_memory_mb" type="number" value="4096"></label></div>
-      </div>
-      <div class="row">
-        <div><label>Disque (Go)<input name="k3s_disk_gb" type="number" value="40"></label></div>
-        <div><label>IP (CIDR)<input name="k3s_ip_address" placeholder="192.168.1.50/24" required></label></div>
-        <div><label>Passerelle<input name="k3s_gateway" placeholder="192.168.1.1" required></label></div>
-      </div>
-    </fieldset>
+<div class="card">
+<form action="/configure" method="post" id="mainForm">
 
-    <fieldset>
-      <legend>VM Active Directory</legend>
-      <div class="row">
-        <div><label>ID template Windows<input name="ad_template_id" type="number" value="9001" required></label></div>
-        <div><label>vCPU<input name="ad_vcpu" type="number" value="2"></label></div>
-        <div><label>RAM (Mo)<input name="ad_memory_mb" type="number" value="4096"></label></div>
-      </div>
-      <div class="row">
-        <div><label>Disque (Go)<input name="ad_disk_gb" type="number" value="80"></label></div>
-        <div><label>IP (CIDR)<input name="ad_ip_address" placeholder="192.168.1.51/24" required></label></div>
-        <div><label>Passerelle<input name="ad_gateway" placeholder="192.168.1.1" required></label></div>
-      </div>
-      <label>Nom de domaine DNS<input name="ad_domain_name" placeholder="acme.lab" required></label>
-      <label>Nom NetBIOS<input name="ad_domain_netbios_name" placeholder="ACME" required></label>
-      <label>Mot de passe admin mode restauration (DSRM)<input name="ad_safe_mode_admin_password" type="password" required></label>
-    </fieldset>
+<!-- ═══ ÉTAPE 1 : Proxmox ═══ -->
+<div class="form-section active" id="sec-1">
+  <div class="card-title"><span class="material-icons-round">dns</span> Connexion Proxmox VE</div>
 
-    <fieldset>
-      <legend>Secrets applicatifs</legend>
-      <small>V1 : stockés en clair dans les fichiers de config générés (ignorés par git). Vault/SOPS prévu en V2 — voir le backlog.</small>
-      <label>Nom base PostgreSQL<input name="postgres_db_name" value="acme_app" required></label>
-      <label>Mot de passe PostgreSQL<input name="postgres_admin_password" type="password" required></label>
-      <label>Mot de passe admin Grafana<input name="grafana_admin_password" type="password" required></label>
-      <label>Rétention Prometheus<input name="prometheus_retention" value="6h"></label>
-    </fieldset>
+  <div class="field">
+    <label>URL de l'API Proxmox <span class="req">*</span></label>
+    <input type="url" name="pm_api_url" value="https://192.168.1.10:8006/api2/json" required>
+    <div class="hint">Format : https://&lt;IP_PROXMOX&gt;:8006/api2/json</div>
+  </div>
 
-    <button type="submit">Générer la configuration</button>
-  </form>
+  <div class="field-row">
+    <div class="field">
+      <label>Token ID <span class="req">*</span></label>
+      <input type="text" name="pm_api_token_id" value="terraform@pve!terraform-token" required>
+      <div class="hint">user@realm!nom-token</div>
+    </div>
+    <div class="field">
+      <label>Token Secret <span class="req">*</span></label>
+      <input type="password" name="pm_api_token_secret" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
+      <div class="hint">Copié à la création du token</div>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field">
+      <label>Nom du nœud Proxmox <span class="req">*</span></label>
+      <input type="text" name="pm_node" value="pve" required>
+    </div>
+    <div class="field">
+      <label>IP du nœud Proxmox <span class="req">*</span></label>
+      <input type="text" name="pm_node_address" value="192.168.1.10" required>
+      <div class="hint">Pour connexion SSH (provider Terraform)</div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Chemin clé SSH privée root Proxmox</label>
+    <input type="text" name="ssh_key_path" value="~/.ssh/id_ed25519">
+    <div class="hint">Utilisée par le provider bpg/proxmox pour importer les disques VM</div>
+  </div>
+</div>
+
+<!-- ═══ ÉTAPE 2 : Infrastructure ═══ -->
+<div class="form-section" id="sec-2">
+  <div class="card-title"><span class="material-icons-round">storage</span> Infrastructure réseau &amp; VMs</div>
+
+  <div class="field-row">
+    <div class="field">
+      <label>Nom de l'entreprise <span class="req">*</span></label>
+      <input type="text" name="company_name" value="acme" required pattern="[a-z0-9\-]+" title="Minuscules, chiffres et tirets uniquement">
+      <div class="hint">Préfixe des noms de VMs (ex: acme-k3s-node1)</div>
+    </div>
+    <div class="field">
+      <label>Bridge réseau Proxmox</label>
+      <input type="text" name="network_bridge" value="vmbr0">
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Stockage Proxmox (datastore)</label>
+    <input type="text" name="datastore" value="local-lvm">
+    <div class="hint">Doit supporter le content-type "images" (ex : local-lvm, ceph, nfs-data)</div>
+  </div>
+
+  <div class="section-title">☸️ VM k3s — Kubernetes (Debian 12)</div>
+  <div class="field-row">
+    <div class="field">
+      <label>Adresse IP (CIDR) <span class="req">*</span></label>
+      <input type="text" name="k3s_ip" value="192.168.1.50/24" required placeholder="192.168.1.50/24">
+    </div>
+    <div class="field">
+      <label>Passerelle</label>
+      <input type="text" name="k3s_gateway" value="192.168.1.254">
+    </div>
+  </div>
+  <div class="field-row triple">
+    <div class="field">
+      <label>vCPU</label>
+      <select name="k3s_vcpu">
+        <option value="2" selected>2 vCPU</option>
+        <option value="4">4 vCPU</option>
+        <option value="6">6 vCPU</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>RAM (Go)</label>
+      <select name="k3s_memory">
+        <option value="2">2 Go</option>
+        <option value="4" selected>4 Go</option>
+        <option value="8">8 Go</option>
+        <option value="16">16 Go</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Disque (Go)</label>
+      <select name="k3s_disk">
+        <option value="20">20 Go</option>
+        <option value="40" selected>40 Go</option>
+        <option value="80">80 Go</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-title">🏢 VM Active Directory (Windows Server 2022)</div>
+  <div class="field-row">
+    <div class="field">
+      <label>Adresse IP (CIDR) <span class="req">*</span></label>
+      <input type="text" name="ad_ip" value="192.168.1.51/24" required placeholder="192.168.1.51/24">
+    </div>
+    <div class="field">
+      <label>Passerelle</label>
+      <input type="text" name="ad_gateway" value="192.168.1.254">
+    </div>
+  </div>
+  <div class="field-row triple">
+    <div class="field">
+      <label>vCPU</label>
+      <select name="ad_vcpu">
+        <option value="2" selected>2 vCPU</option>
+        <option value="4">4 vCPU</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>RAM (Go)</label>
+      <select name="ad_memory">
+        <option value="2">2 Go</option>
+        <option value="4" selected>4 Go</option>
+        <option value="8">8 Go</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Disque (Go)</label>
+      <select name="ad_disk">
+        <option value="60">60 Go</option>
+        <option value="80" selected>80 Go</option>
+        <option value="120">120 Go</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ÉTAPE 3 : Services ═══ -->
+<div class="form-section" id="sec-3">
+  <div class="card-title"><span class="material-icons-round">apps</span> Services &amp; mots de passe</div>
+
+  <div class="section-title">🏢 Active Directory</div>
+  <div class="field-row">
+    <div class="field">
+      <label>Nom de domaine FQDN <span class="req">*</span></label>
+      <input type="text" name="ad_domain" value="acme.lab" required placeholder="acme.lab">
+    </div>
+    <div class="field">
+      <label>Nom NetBIOS <span class="req">*</span></label>
+      <input type="text" name="ad_netbios" value="ACME" required placeholder="ACME" style="text-transform:uppercase">
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field">
+      <label>Mot de passe DSRM (récupération AD) <span class="req">*</span></label>
+      <input type="password" name="ad_dsrm_password" placeholder="Complexité Windows requise" required>
+      <div class="hint">Min. 8 car., majuscule + chiffre + spécial</div>
+    </div>
+    <div class="field">
+      <label>Mot de passe Administrator Windows <span class="req">*</span></label>
+      <input type="password" name="windows_admin_password" placeholder="Utilisé par Packer + Ansible" required>
+      <div class="hint">Identique au fichier pkrvars Packer</div>
+    </div>
+  </div>
+
+  <div class="section-title">☸️ Application web &amp; base de données</div>
+  <div class="field-row">
+    <div class="field">
+      <label>Domaine de l'application</label>
+      <input type="text" name="webapp_domain" value="app.acme.lab">
+      <div class="hint">Accès via Traefik (ingress k3s)</div>
+    </div>
+    <div class="field">
+      <label>Mot de passe PostgreSQL <span class="req">*</span></label>
+      <input type="password" name="postgres_password" placeholder="Base de données applicative" required>
+    </div>
+  </div>
+
+  <div class="section-title">📊 Monitoring (Prometheus + Grafana)</div>
+  <div class="field">
+    <label>Mot de passe admin Grafana <span class="req">*</span></label>
+    <input type="password" name="grafana_password" placeholder="Tableau de bord Grafana" required>
+  </div>
+</div>
+
+<!-- ═══ ÉTAPE 4 : Confirmation ═══ -->
+<div class="form-section" id="sec-4">
+  <div class="card-title"><span class="material-icons-round">rocket_launch</span> Prêt à déployer</div>
+
+  <div class="warn-box">
+    <span class="material-icons-round" style="font-size:1.1rem;flex-shrink:0">timer</span>
+    <div>Le déploiement complet prend <strong>60-90 minutes</strong> si le template Windows doit être construit (première fois), ou <strong>15-30 minutes</strong> si le template existe déjà dans Proxmox.</div>
+  </div>
+
+  <div class="summary-grid" id="summary-grid">
+    <!-- Rempli par JavaScript -->
+  </div>
+
+  <div style="margin-top:1.5rem;padding:1rem;background:var(--surface2);border-radius:8px;font-size:.82rem;color:var(--muted);">
+    <strong style="color:var(--text)">Fichiers générés automatiquement :</strong>
+    <div style="margin-top:.5rem;font-family:'JetBrains Mono',monospace;line-height:1.8">
+      terraform/terraform.tfvars.json<br>
+      ansible/group_vars/all.yml<br>
+      packer/windows-server-2022.pkrvars.hcl
+    </div>
+  </div>
+</div>
+
+<!-- ── Navigation ── -->
+<div class="btn-row">
+  <button type="button" class="btn btn-ghost" id="btnPrev" onclick="goStep(-1)" style="display:none">
+    <span class="material-icons-round" style="font-size:1rem">arrow_back</span> Retour
+  </button>
+  <div style="flex:1"></div>
+  <button type="button" class="btn btn-primary" id="btnNext" onclick="goStep(1)">
+    Suivant <span class="material-icons-round" style="font-size:1rem">arrow_forward</span>
+  </button>
+  <button type="submit" class="btn btn-success" id="btnDeploy" style="display:none">
+    <span class="material-icons-round" style="font-size:1rem">rocket_launch</span> Lancer le déploiement
+  </button>
+</div>
+
+</form>
+</div>
+
+<script>
+let currentStep = 1;
+const totalSteps = 4;
+
+function goStep(dir) {
+  const next = currentStep + dir;
+  if (next < 1 || next > totalSteps) return;
+  if (dir > 0 && !validateStep(currentStep)) return;
+
+  document.getElementById('sec-' + currentStep).classList.remove('active');
+  document.getElementById('sdot-' + currentStep).classList.remove('active');
+  document.getElementById('sdot-' + currentStep).classList.add('done');
+
+  currentStep = next;
+  document.getElementById('sec-' + currentStep).classList.add('active');
+  document.getElementById('sdot-' + currentStep).classList.add('active');
+
+  if (currentStep === 4) buildSummary();
+
+  document.getElementById('btnPrev').style.display = currentStep > 1 ? '' : 'none';
+  document.getElementById('btnNext').style.display = currentStep < totalSteps ? '' : 'none';
+  document.getElementById('btnDeploy').style.display = currentStep === totalSteps ? '' : 'none';
+  window.scrollTo(0,0);
+}
+
+function validateStep(step) {
+  const section = document.getElementById('sec-' + step);
+  const inputs = section.querySelectorAll('input[required]');
+  let ok = true;
+  inputs.forEach(el => {
+    if (!el.value.trim()) { el.style.borderColor='var(--danger)'; ok = false; }
+    else el.style.borderColor='';
+  });
+  if (!ok) { inputs[0].focus(); }
+  return ok;
+}
+
+function v(name) {
+  const el = document.querySelector('[name="' + name + '"]');
+  return el ? el.value : '';
+}
+
+function buildSummary() {
+  const items = [
+    ['Proxmox', v('pm_api_url')],
+    ['Nœud', v('pm_node') + ' (' + v('pm_node_address') + ')'],
+    ['Entreprise', v('company_name')],
+    ['Réseau', v('network_bridge') + ' / ' + v('datastore')],
+    ['VM k3s', v('k3s_ip') + ' — ' + v('k3s_vcpu') + ' vCPU / ' + v('k3s_memory') + ' Go / ' + v('k3s_disk') + ' Go'],
+    ['VM AD DC', v('ad_ip') + ' — ' + v('ad_vcpu') + ' vCPU / ' + v('ad_memory') + ' Go / ' + v('ad_disk') + ' Go'],
+    ['Domaine AD', v('ad_domain') + ' (' + v('ad_netbios').toUpperCase() + ')'],
+    ['Application', v('webapp_domain')],
+  ];
+  const grid = document.getElementById('summary-grid');
+  grid.innerHTML = items.map(([k,val]) =>
+    '<div class="summary-item"><div class="key">' + k + '</div><div class="val mono">' + val + '</div></div>'
+  ).join('');
+}
+</script>
 </body>
 </html>
