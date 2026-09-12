@@ -1,7 +1,5 @@
 ---
-# Roadmap J6-J7 : déployer une stack front+back+bdd de démo dans k3s,
-# avec Traefik comme ingress. Le manifeste ci-dessous est un point de départ —
-# à remplacer par l'appli réelle choisie (Gitea, ou stack maison).
+# Déployer une stack front+back+bdd de démo dans k3s via Traefik (ingress).
 
 - name: Créer le namespace applicatif
   kubernetes.core.k8s:
@@ -16,9 +14,11 @@
   kubernetes.core.k8s:
     state: present
     namespace: webapp
-    src: "{{ role_path }}/templates/webapp-stack.yml.j2"
+    # kubernetes.core.k8s ne traite pas les templates Jinja2 via "src:" ;
+    # on utilise le filtre "template" pour interpréter les variables Ansible avant envoi.
+    definition: "{{ lookup('template', role_path + '/templates/webapp-stack.yml.j2') | from_yaml_all | list }}"
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
-# TODO (J6) : remplacer le manifeste par l'appli réellement choisie.
-# TODO (J7) : ajouter la ressource IngressRoute Traefik + certificat (mkcert ou self-signed).
+# TODO : remplacer le manifeste placeholder par l'appli réelle choisie (Gitea, Nextcloud, etc.)
+# TODO : ajouter la ressource IngressRoute Traefik + certificat (mkcert ou cert-manager).

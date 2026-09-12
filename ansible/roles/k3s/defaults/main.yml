@@ -1,3 +1,4 @@
 ---
-k3s_version: "v1.30.4+k3s1"
+# Vérifier la dernière version stable sur https://github.com/k3s-io/k3s/releases
+k3s_version: "v1.31.4+k3s1"
 k3s_kubeconfig_local_path: "{{ lookup('env', 'HOME') }}/.kube/bootstrap-pme.yaml"

@@ -9,7 +9,7 @@ variable "node_name" {
 }
 
 variable "template_id" {
-  description = "ID du template (VM Proxmox) cloud-init à cloner"
+  description = "ID de la VM template cloud-init à cloner"
   type        = number
 }
 
@@ -40,6 +40,17 @@ variable "gateway" {
 variable "bridge" {
   type    = string
   default = "vmbr0"
+}
+
+variable "datastore" {
+  description = "Stockage Proxmox pour le disque de la VM (ex: local-lvm)"
+  type        = string
+  default     = "local-lvm"
+}
+
+variable "ssh_public_key" {
+  description = "Clé publique SSH injectée via cloud-init pour permettre la connexion Ansible"
+  type        = string
 }
 
 variable "tags" {

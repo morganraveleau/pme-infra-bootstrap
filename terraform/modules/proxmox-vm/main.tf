@@ -1,9 +1,5 @@
-# Module réutilisable : clone un template cloud-init existant et l'ajuste
-# (CPU/RAM/disque/IP). Utilisé à la fois pour k3s-node1 et ad-dc1 (J3-J4 de la roadmap).
-#
-# NB : pour la VM Windows (ad-dc1), le template doit déjà avoir cloudbase-init
-# (équivalent Windows de cloud-init) configuré, ou bien un provisioning
-# complémentaire via winrm sera nécessaire côté Ansible (rôle ad_domain_controller).
+# Module réutilisable : clone un template cloud-init et configure la VM
+# (CPU / RAM / disque / IP / SSH). Utilisé pour k3s-node1 et ad-dc1.
 
 resource "proxmox_virtual_environment_vm" "this" {
   name      = var.name
@@ -12,6 +8,11 @@ resource "proxmox_virtual_environment_vm" "this" {
   clone {
     vm_id = var.template_id
     full  = true
+  }
+
+  # qemu-guest-agent nécessaire pour que Proxmox récupère l'IP réelle de la VM
+  agent {
+    enabled = true
   }
 
   cpu {
@@ -24,14 +25,20 @@ resource "proxmox_virtual_environment_vm" "this" {
   }
 
   disk {
-    datastore_id = "local-lvm"
+    datastore_id = var.datastore
     interface    = "scsi0"
     size         = var.disk_gb
+    discard      = "on"
   }
 
   network_device {
     bridge = var.bridge
+    model  = "virtio"
   }
+
+  # Console série héritée du template cloud Debian
+  serial_device {}
+  vga { type = "serial0" }
 
   initialization {
     ip_config {
@@ -40,13 +47,18 @@ resource "proxmox_virtual_environment_vm" "this" {
         gateway = var.gateway
       }
     }
+    # Injection de la clé SSH publique via cloud-init → Ansible peut se connecter
+    user_account {
+      username = "debian"
+      keys     = [var.ssh_public_key]
+    }
   }
 
   tags = var.tags
 
   lifecycle {
     ignore_changes = [
-      # évite de recréer la VM si quelqu'un modifie l'IP à la main pendant les tests
+      # Évite de recréer la VM si l'IP est modifiée à la main pendant les tests
       initialization,
     ]
   }

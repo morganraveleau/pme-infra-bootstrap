@@ -1,25 +1,39 @@
-# Copie ce fichier en terraform.tfvars (ou laisse le formulaire web générer
-# terraform.tfvars.json à ta place) et remplis avec tes valeurs réelles.
+# Copie ce fichier en terraform.tfvars et remplis avec tes valeurs réelles.
+# (ou laisse le formulaire web webapp-config/ générer terraform.tfvars.json à ta place)
 # Ce fichier est ignoré par git (voir .gitignore) — ne jamais committer de vrais secrets.
 
-pm_api_url           = "https://192.168.1.10:8006/api2/json"
-pm_api_token_id       = "terraform@pve!bootstrap"
-pm_api_token_secret   = "REMPLACE-MOI"
-pm_node               = "pve"
-company_name          = "acme"
-network_bridge        = "vmbr0"
+# --- Connexion Proxmox ---
+pm_api_url              = "https://192.168.1.10:8006/api2/json"
+pm_api_token_id         = "terraform@pve!terraform-token"
+pm_api_token_secret     = "REMPLACE-MOI"   # valeur obtenue lors de la création du token
+pm_node                 = "pve"
+pm_node_address         = "192.168.1.10"   # IP du noeud Proxmox (pour SSH provider)
+pm_ssh_private_key_path = "~/.ssh/id_ed25519"
 
+# --- Paramètres généraux ---
+company_name   = "acme"
+network_bridge = "vmbr0"
+datastore      = "local-lvm"
+
+# Clé publique SSH injectée dans les VMs Linux via cloud-init.
+# deploy.sh génère automatiquement ~/.ssh/id_ed25519_bootstrap si elle n'existe pas
+# et exporte TF_VAR_ssh_public_key — cette variable est donc facultative ici.
+# ssh_public_key = "ssh-ed25519 AAAA... bootstrap-pme"
+
+# --- VM k3s (Debian 12 cloud-init, cloné depuis le template auto-créé) ---
 k3s_vm = {
-  template_id = 9000 # ID du template cloud-init Debian 12 (créé à la main, voir docs/architecture.md)
-  vcpu        = 2
-  memory_mb   = 4096
-  disk_gb     = 40
-  ip_address  = "192.168.1.50/24"
-  gateway     = "192.168.1.1"
+  vcpu       = 2
+  memory_mb  = 4096
+  disk_gb    = 40
+  ip_address = "192.168.1.50/24"
+  gateway    = "192.168.1.1"
 }
 
+# --- VM Active Directory (Windows Server) ---
+# PRÉREQUIS : créer un template Windows Server 2022 dans Proxmox avec cloudbase-init.
+# Voir docs/architecture.md#windows-template pour la procédure.
 ad_vm = {
-  template_id = 9001 # ID du template Windows Server (créé à la main)
+  template_id = 9001   # ID du template Windows Server dans Proxmox
   vcpu        = 2
   memory_mb   = 4096
   disk_gb     = 80
