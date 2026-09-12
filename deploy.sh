@@ -72,10 +72,7 @@ fi
 # =============================================================================
 log "Installation des collections Ansible"
 
-ansible-galaxy collection install \
-  kubernetes.core \
-  ansible.windows \
-  microsoft.ad \
+ansible-galaxy collection install -r "$ROOT_DIR/ansible/requirements.yml" \
   --force-with-deps 2>&1 | grep -E '(Installing|Skipping|error)' || true
 
 # =============================================================================

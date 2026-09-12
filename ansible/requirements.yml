@@ -1,0 +1,14 @@
+---
+# Versions épinglées des collections Ansible utilisées par ce projet.
+# Installer avec : ansible-galaxy collection install -r ansible/requirements.yml
+#
+# Les deprecation warnings sur ansible.module_utils._text viennent des collections
+# tierces (kubernetes.core, microsoft.ad) et seront corrigés dans leurs futures versions.
+# Ces versions sont les dernières testées et validées avec ce projet.
+collections:
+  - name: kubernetes.core
+    version: ">=3.1.0"
+  - name: ansible.windows
+    version: ">=2.5.0"
+  - name: microsoft.ad
+    version: ">=1.7.0"
