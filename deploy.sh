@@ -10,6 +10,11 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="$ROOT_DIR/terraform"
 ANSIBLE_DIR="$ROOT_DIR/ansible"
 
+# WSL / NTFS : terraform ne peut pas faire chmod sur /mnt/c/...
+# On stocke les providers sur le filesystem Linux natif pour éviter l'erreur.
+export TF_DATA_DIR="${HOME}/.terraform-data/pme-infra-bootstrap"
+mkdir -p "$TF_DATA_DIR"
+
 log()  { printf '\n\033[1;33m==> %s\033[0m\n' "$1"; }
 err()  { printf '\033[1;31mErreur : %s\033[0m\n' "$1" >&2; exit 1; }
 info() { printf '    %s\n' "$1"; }
@@ -19,12 +24,17 @@ info() { printf '    %s\n' "$1"; }
 # =============================================================================
 log "Vérification des pré-requis"
 
-command -v terraform      >/dev/null 2>&1 || err "terraform non trouvé — installe-le depuis https://developer.hashicorp.com/terraform"
+command -v terraform        >/dev/null 2>&1 || err "terraform non trouvé — installe-le depuis https://developer.hashicorp.com/terraform"
 command -v ansible-playbook >/dev/null 2>&1 || err "ansible-playbook non trouvé — pip install ansible"
-command -v curl           >/dev/null 2>&1 || err "curl non trouvé"
+command -v curl             >/dev/null 2>&1 || err "curl non trouvé"
+command -v kubectl          >/dev/null 2>&1 || err "kubectl non trouvé — installe-le :
+  Linux/WSL : curl -LO \"https://dl.k8s.io/release/\$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl\" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+  macOS     : brew install kubectl
+  Voir      : https://kubernetes.io/docs/tasks/tools/"
 
 info "terraform   : $(terraform version -json | python3 -c 'import sys,json;print(json.load(sys.stdin)[\"terraform_version\"])')"
 info "ansible     : $(ansible --version | head -1)"
+info "kubectl     : $(kubectl version --client --short 2>/dev/null || kubectl version --client | head -1)"
 
 # =============================================================================
 # 2. Clé SSH dédiée au projet
