@@ -28,6 +28,14 @@
     src: /etc/rancher/k3s/k3s.yaml
   register: kubeconfig_raw
 
+- name: Créer le répertoire kubeconfig local si nécessaire
+  ansible.builtin.file:
+    path: "{{ k3s_kubeconfig_local_path | dirname }}"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  become: false
+
 - name: Copier le kubeconfig en local (poste de pilotage) avec l'IP réelle du noeud
   ansible.builtin.copy:
     content: "{{ (kubeconfig_raw.content | b64decode) | replace('127.0.0.1', ansible_host) }}"
