@@ -1,0 +1,26 @@
+# =============================================================================
+# windows-server-2022.pkrvars.hcl.example
+# Copier en windows-server-2022.pkrvars.hcl et remplir les valeurs réelles.
+# Ce fichier est dans .gitignore (contient des secrets).
+# =============================================================================
+
+# Même URL que Terraform
+pm_api_url = "https://192.168.1.10:8006/api2/json"
+
+# Même token que Terraform (doit avoir les droits VM.Allocate, VM.Config.*, Datastore.*)
+pm_api_token_id     = "terraform@pve!terraform-token"
+pm_api_token_secret = "CHANGE_ME"
+
+pm_node        = "pve"
+network_bridge = "vmbr0"
+datastore      = "local-lvm"
+
+# Nom du fichier ISO Windows Server 2022 uploadé dans le stockage local Proxmox.
+# Télécharger l'ISO d'évaluation (180 jours, gratuit) :
+#   https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2022
+# Puis l'uploader via l'interface Proxmox : Datacenter → local → ISO Images → Upload
+windows_iso_file = "Windows_Server_2022_x64_EN_Eval.iso"
+
+# Mot de passe Administrateur utilisé UNIQUEMENT pendant le build Packer.
+# Cloudbase-init le réinitialisera au 1er boot de chaque VM clonée.
+windows_admin_password = "Packer2024!"

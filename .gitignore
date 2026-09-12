@@ -27,3 +27,7 @@ webapp-config/__pycache__/
 .DS_Store
 .vscode/
 *.swp
+
+# Packer
+packer/windows-server-2022.pkrvars.hcl
+packer/.packer_cache/

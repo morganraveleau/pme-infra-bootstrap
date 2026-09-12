@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  autounattend.xml — Installation automatique Windows Server 2022 Standard (Desktop Experience)
+  Monté par Packer comme un disque CD (ide2, label AUTOUNATTEND).
+  Windows Setup le détecte automatiquement à la racine de tout lecteur amovible.
+-->
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+
+  <!-- =========================================================
+       Phase windowsPE : choix de l'image, partitionnement, langue
+       ========================================================= -->
+  <settings pass="windowsPE">
+
+    <component name="Microsoft-Windows-International-Core-WinPE"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <SetupUILanguage>
+        <UILanguage>en-US</UILanguage>
+      </SetupUILanguage>
+      <InputLocale>fr-FR</InputLocale>
+      <SystemLocale>fr-FR</SystemLocale>
+      <UILanguage>en-US</UILanguage>
+      <UserLocale>fr-FR</UserLocale>
+    </component>
+
+    <component name="Microsoft-Windows-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+
+      <!-- Clé KMS de configuration — sélectionne Windows Server 2022 Standard Desktop Experience.
+           Ce n'est PAS une clé d'activation : l'ISO d'évaluation démarre sa période de grâce. -->
+      <ProductKey>VDYBN-27WPP-V4HQT-9VMD4-VMK7H</ProductKey>
+
+      <AcceptEula>true</AcceptEula>
+
+      <DiskConfiguration>
+        <Disk wcm:action="add">
+          <DiskID>0</DiskID>
+          <WillWipeDisk>true</WillWipeDisk>
+          <CreatePartitions>
+            <!-- Partition système active (BIOS/MBR) -->
+            <CreatePartition wcm:action="add">
+              <Order>1</Order>
+              <Size>500</Size>
+              <Type>Primary</Type>
+            </CreatePartition>
+            <!-- Partition Windows — occupe le reste du disque -->
+            <CreatePartition wcm:action="add">
+              <Order>2</Order>
+              <Type>Primary</Type>
+              <Extend>true</Extend>
+            </CreatePartition>
+          </CreatePartitions>
+          <ModifyPartitions>
+            <ModifyPartition wcm:action="add">
+              <Order>1</Order>
+              <PartitionID>1</PartitionID>
+              <Label>System</Label>
+              <Format>NTFS</Format>
+              <Active>true</Active>
+            </ModifyPartition>
+            <ModifyPartition wcm:action="add">
+              <Order>2</Order>
+              <PartitionID>2</PartitionID>
+              <Label>Windows</Label>
+              <Format>NTFS</Format>
+              <Letter>C</Letter>
+            </ModifyPartition>
+          </ModifyPartitions>
+        </Disk>
+      </DiskConfiguration>
+
+      <ImageInstall>
+        <OSImage>
+          <InstallTo>
+            <DiskID>0</DiskID>
+            <PartitionID>2</PartitionID>
+          </InstallTo>
+        </OSImage>
+      </ImageInstall>
+
+      <UserData>
+        <AcceptEula>true</AcceptEula>
+        <FullName>Administrator</FullName>
+        <Organization>Bootstrap PME</Organization>
+      </UserData>
+
+    </component>
+  </settings>
+
+  <!-- =========================================================
+       Phase specialize : nom de machine, fuseau horaire
+       ========================================================= -->
+  <settings pass="specialize">
+    <component name="Microsoft-Windows-Shell-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <!-- * = nom aléatoire généré par Windows, cloudbase-init le redéfinira au 1er boot -->
+      <ComputerName>*</ComputerName>
+      <TimeZone>Romance Standard Time</TimeZone>
+    </component>
+
+    <!-- Désactiver le pare-feu Windows pendant le build (Packer doit accéder à WinRM) -->
+    <component name="Networking-MPSSVC-Svc"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <FirewallGroups>
+        <FirewallGroup wcm:action="add" wcm:keyValue="WinRM">
+          <Active>true</Active>
+          <Group>Windows Remote Management</Group>
+          <Profile>all</Profile>
+        </FirewallGroup>
+      </FirewallGroups>
+    </component>
+  </settings>
+
+  <!-- =========================================================
+       Phase oobeSystem : compte Administrateur + WinRM pour Packer
+       ========================================================= -->
+  <settings pass="oobeSystem">
+    <component name="Microsoft-Windows-Shell-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+
+      <OOBE>
+        <HideEULAPage>true</HideEULAPage>
+        <HideLocalAccountScreen>true</HideLocalAccountScreen>
+        <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+        <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+        <ProtectYourPC>3</ProtectYourPC>
+        <SkipMachineOOBE>true</SkipMachineOOBE>
+        <SkipUserOOBE>true</SkipUserOOBE>
+        <NetworkLocation>Work</NetworkLocation>
+      </OOBE>
+
+      <UserAccounts>
+        <AdministratorPassword>
+          <!-- Doit correspondre à windows_admin_password dans les pkrvars -->
+          <Value>Packer2024!</Value>
+          <PlainText>true</PlainText>
+        </AdministratorPassword>
+      </UserAccounts>
+
+      <!-- Activer WinRM avant que Packer essaie de se connecter -->
+      <FirstLogonCommands>
+        <SynchronousCommand wcm:action="add">
+          <Order>1</Order>
+          <Description>Enable WinRM</Description>
+          <RequiresUserInput>false</RequiresUserInput>
+          <CommandLine>cmd /c winrm quickconfig -q</CommandLine>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>2</Order>
+          <Description>Allow unencrypted WinRM (réseau local de build)</Description>
+          <RequiresUserInput>false</RequiresUserInput>
+          <CommandLine>cmd /c winrm set winrm/config/service @{AllowUnencrypted="true"}</CommandLine>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>3</Order>
+          <Description>Allow Basic auth</Description>
+          <RequiresUserInput>false</RequiresUserInput>
+          <CommandLine>cmd /c winrm set winrm/config/service/auth @{Basic="true"}</CommandLine>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>4</Order>
+          <Description>Open WinRM port in firewall</Description>
+          <RequiresUserInput>false</RequiresUserInput>
+          <CommandLine>cmd /c netsh advfirewall firewall add rule name="WinRM HTTP" dir=in action=allow protocol=tcp localport=5985</CommandLine>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>5</Order>
+          <Description>Set ExecutionPolicy for Packer scripts</Description>
+          <RequiresUserInput>false</RequiresUserInput>
+          <CommandLine>powershell -Command "Set-ExecutionPolicy Bypass -Scope LocalMachine -Force"</CommandLine>
+        </SynchronousCommand>
+      </FirstLogonCommands>
+
+    </component>
+  </settings>
+
+</unattend>
