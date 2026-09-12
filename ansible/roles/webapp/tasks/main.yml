@@ -1,6 +1,14 @@
 ---
 # Déployer une stack front+back+bdd de démo dans k3s via Traefik (ingress).
 
+- name: Installer les dépendances Python pour kubernetes.core
+  ansible.builtin.apt:
+    name:
+      - python3-kubernetes
+    state: present
+    update_cache: false
+  become: true
+
 - name: Créer le namespace applicatif
   kubernetes.core.k8s:
     name: webapp
