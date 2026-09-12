@@ -1,6 +1,17 @@
 ---
 # Roadmap J8-J9 : kube-prometheus-stack via Helm, piloté par Ansible.
 
+- name: Vérifier si Helm est déjà installé
+  ansible.builtin.stat:
+    path: /usr/local/bin/helm
+  register: helm_binary
+
+- name: Installer Helm (script officiel)
+  ansible.builtin.shell: |
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  when: not helm_binary.stat.exists
+  become: true
+
 - name: Ajouter le repo Helm prometheus-community
   kubernetes.core.helm_repository:
     name: prometheus-community
