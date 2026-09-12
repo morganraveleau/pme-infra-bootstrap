@@ -115,6 +115,8 @@ fi
 # =============================================================================
 # 8. Ansible : configurer les VMs
 # =============================================================================
+export ANSIBLE_CONFIG="$ANSIBLE_DIR/ansible.cfg"
+
 log "Ansible playbook"
 ansible-playbook \
   -i "$ANSIBLE_DIR/inventory/hosts.yml" \
