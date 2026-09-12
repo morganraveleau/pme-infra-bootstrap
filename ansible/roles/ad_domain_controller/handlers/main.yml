@@ -1,0 +1,12 @@
+---
+- name: Reboot after AD DS install
+  ansible.windows.win_reboot:
+    reboot_timeout: 600
+    post_reboot_delay: 60
+  listen: "reboot_adds"
+
+- name: Reboot after DC promotion
+  ansible.windows.win_reboot:
+    reboot_timeout: 600
+    post_reboot_delay: 120
+  listen: "reboot_promotion"

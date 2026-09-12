@@ -1,0 +1,36 @@
+---
+# ── Étape 5 : Créer les utilisateurs et les affecter aux groupes ─────────────
+
+- name: "AD | Utilisateurs"
+  microsoft.ad.user:
+    name: "{{ item.firstname }} {{ item.lastname }}"
+    firstname: "{{ item.firstname }}"
+    surname: "{{ item.lastname }}"
+    sam_account_name: "{{ item.username }}"
+    user_principal_name: "{{ item.username }}@{{ ad_domain_name }}"
+    path: "OU={{ item.ou }},OU={{ ad_ou_company }},{{ ad_dc }}"
+    description: "{{ item.description | default('') }}"
+    password: "{{ item.password }}"
+    password_never_expires: "{{ item.password_never_expires | default(false) }}"
+    update_password: on_create   # ne réinitialise pas le MDP si l'user existe déjà
+    enabled: true
+    state: present
+  loop: "{{ ad_users }}"
+  loop_control:
+    label: "{{ item.username }}"
+  no_log: true                   # masque les mots de passe dans les logs
+
+- name: "AD | Affectation des utilisateurs aux groupes"
+  microsoft.ad.group:
+    name: "{{ grp_item }}"
+    path: "OU=Groupes,OU={{ ad_ou_company }},{{ ad_dc }}"
+    members:
+      add:
+        - "{{ user_item.username }}"
+    state: present
+  loop: "{{ ad_users | subelements('groups') }}"
+  loop_control:
+    label: "{{ user_item.username }} → {{ grp_item }}"
+  vars:
+    user_item: "{{ item.0 }}"
+    grp_item: "{{ item.1 }}"

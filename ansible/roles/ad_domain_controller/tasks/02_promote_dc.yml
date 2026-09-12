@@ -1,0 +1,54 @@
+---
+# ── Étape 2 : Promouvoir le serveur en contrôleur de domaine ─────────────────
+
+- name: "AD | Vérifier si le domaine existe déjà"
+  ansible.windows.win_shell: |
+    try {
+      (Get-ADDomain).DNSRoot
+    } catch {
+      "NOT_FOUND"
+    }
+  register: _domain_check
+  changed_when: false
+  failed_when: false
+
+- name: "AD | Promouvoir en DC (nouvelle forêt) — ignoré si domaine déjà présent"
+  microsoft.ad.domain:
+    dns_domain_name: "{{ ad_domain_name }}"
+    domain_netbios_name: "{{ ad_domain_netbios_name }}"
+    safe_mode_password: "{{ ad_safe_mode_admin_password }}"
+    install_dns: true
+    domain_mode: WinThreshold     # Windows Server 2016+
+    forest_mode: WinThreshold
+  register: _promote_result
+  when: _domain_check.stdout | trim != ad_domain_name
+
+- name: "AD | Redémarrer après promotion DC"
+  ansible.builtin.debug:
+    msg: "Redémarrage post-promotion requis"
+  when: _promote_result.reboot_required | default(false)
+  changed_when: _promote_result.reboot_required | default(false)
+  notify: reboot_promotion
+
+- name: "AD | Flush handlers (reboot post-promotion)"
+  ansible.builtin.meta: flush_handlers
+
+- name: "AD | Attendre que les services AD soient disponibles"
+  ansible.windows.win_shell: |
+    $retries = 0
+    while ($retries -lt 20) {
+      try {
+        $null = Get-ADDomain
+        Write-Output "READY"
+        break
+      } catch {
+        Start-Sleep -Seconds 15
+        $retries++
+      }
+    }
+    if ($retries -ge 20) { throw "AD non disponible après 5 minutes" }
+  register: _ad_ready
+  changed_when: false
+  retries: 3
+  delay: 30
+  until: _ad_ready.stdout | trim == "READY"

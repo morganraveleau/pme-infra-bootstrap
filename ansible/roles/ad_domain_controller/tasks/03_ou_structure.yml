@@ -1,0 +1,20 @@
+---
+# ── Étape 3 : Créer la structure d'Unités d'Organisation ─────────────────────
+
+- name: "AD | OU racine — {{ ad_ou_company }}"
+  microsoft.ad.ou:
+    name: "{{ ad_ou_company }}"
+    path: "{{ ad_dc }}"
+    description: "Racine des objets {{ ad_ou_company }}"
+    state: present
+  register: _ou_root
+
+- name: "AD | OUs enfants sous {{ ad_ou_company }}"
+  microsoft.ad.ou:
+    name: "{{ item.name }}"
+    path: "OU={{ ad_ou_company }},{{ ad_dc }}"
+    description: "{{ item.description }}"
+    state: present
+  loop: "{{ ad_ou_children }}"
+  loop_control:
+    label: "OU={{ item.name }},OU={{ ad_ou_company }},{{ ad_dc }}"

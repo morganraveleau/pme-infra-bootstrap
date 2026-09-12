@@ -1,27 +1,28 @@
 ---
-# Roadmap J10 : installer AD DS et promouvoir le contrôleur de domaine.
-# Nécessite la collection Ansible "ansible.windows" + "microsoft.ad"
-# (winrm configuré sur la VM, voir inventory/hosts.yml.example).
+# Rôle : ad_domain_controller
+# Prérequis :
+#   - VM Windows Server 2022 clonée depuis le template Packer (vm_id 9001)
+#   - WinRM HTTPS (port 5986) configuré par le script 03-finalize.ps1 de Packer
+#   - Variables ad_domain_name, ad_domain_netbios_name, ad_safe_mode_admin_password
+#     définies dans group_vars/all.yml (voir group_vars/all.yml.example)
+# Collections requises : ansible.windows, microsoft.ad (voir ansible/requirements.yml)
 
-- name: Installer la fonctionnalité AD Domain Services
-  ansible.windows.win_feature:
-    name: AD-Domain-Services
-    include_management_tools: true
-    state: present
-  register: install_adds
+- name: "AD | Étape 1 — Installer AD Domain Services"
+  ansible.builtin.include_tasks: 01_install_adds.yml
+  tags: [ad, ad_install]
 
-- name: Promouvoir le serveur en contrôleur de domaine (nouvelle forêt)
-  microsoft.ad.domain:
-    dns_domain_name: "{{ ad_domain_name }}"
-    domain_netbios_name: "{{ ad_domain_netbios_name }}"
-    safe_mode_password: "{{ ad_safe_mode_admin_password }}"
-  register: promote_result
+- name: "AD | Étape 2 — Promouvoir en contrôleur de domaine"
+  ansible.builtin.include_tasks: 02_promote_dc.yml
+  tags: [ad, ad_promote]
 
-- name: Redémarrer après la promotion
-  ansible.windows.win_reboot:
-    reboot_timeout: 600
-  when: promote_result.reboot_required | default(false)
+- name: "AD | Étape 3 — Créer la structure d'OUs"
+  ansible.builtin.include_tasks: 03_ou_structure.yml
+  tags: [ad, ad_ou]
 
-# TODO (J10) : ajouter une structure d'OU de base (Utilisateurs, Ordinateurs, Groupes)
-# et 1-2 utilisateurs/groupes d'exemple pour démontrer que l'annuaire fonctionne.
-# TODO (V2) : rôle WSUS séparé, sur une VM Windows dédiée (voir docs/architecture.md#backlog).
+- name: "AD | Étape 4 — Créer les groupes de sécurité"
+  ansible.builtin.include_tasks: 04_groups.yml
+  tags: [ad, ad_groups]
+
+- name: "AD | Étape 5 — Créer les utilisateurs"
+  ansible.builtin.include_tasks: 05_users.yml
+  tags: [ad, ad_users]

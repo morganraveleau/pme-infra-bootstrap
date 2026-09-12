@@ -1,0 +1,14 @@
+---
+# ── Étape 4 : Créer les groupes de sécurité ──────────────────────────────────
+
+- name: "AD | Groupes de sécurité"
+  microsoft.ad.group:
+    name: "{{ item.name }}"
+    path: "OU={{ item.ou }},OU={{ ad_ou_company }},{{ ad_dc }}"
+    description: "{{ item.description }}"
+    scope: global
+    category: security
+    state: present
+  loop: "{{ ad_groups }}"
+  loop_control:
+    label: "{{ item.name }}"

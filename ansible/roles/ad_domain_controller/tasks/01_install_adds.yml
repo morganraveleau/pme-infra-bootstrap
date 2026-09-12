@@ -1,0 +1,19 @@
+---
+# ── Étape 1 : Installer la fonctionnalité AD Domain Services ──────────────────
+
+- name: "AD | Installer AD-Domain-Services et outils de gestion"
+  ansible.windows.win_feature:
+    name: AD-Domain-Services
+    include_management_tools: true
+    state: present
+  register: _adds_install
+
+- name: "AD | Redémarrer si l'installation le requiert"
+  ansible.builtin.debug:
+    msg: "Redémarrage requis après installation AD DS"
+  when: _adds_install.reboot_required | default(false)
+  changed_when: _adds_install.reboot_required | default(false)
+  notify: reboot_adds
+
+- name: "AD | Flush handlers (reboot si besoin avant promotion)"
+  ansible.builtin.meta: flush_handlers

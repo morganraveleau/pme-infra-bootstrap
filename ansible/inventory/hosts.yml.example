@@ -1,19 +1,31 @@
-# Copie en hosts.yml (ignoré par git) une fois les IP connues,
-# ou laisse deploy.sh le générer depuis les outputs Terraform.
+---
+# Copier ce fichier en hosts.yml (ignoré par git) et adapter les IPs.
+# Les IPs sont assignées par Terraform (cloud-init / cloudbase-init).
+# Obtenir les IPs : terraform -chdir=terraform output
+
 all:
   children:
+
+    # ── Nœud k3s (Debian 12) ─────────────────────────────────────────────────
     k3s:
       hosts:
-        k3s-node1:
-          ansible_host: 192.168.1.50
+        k3s-node01:
+          ansible_host: "192.168.1.11"       # → terraform output k3s_ip
           ansible_user: debian
-          ansible_ssh_private_key_file: ~/.ssh/id_ed25519_bootstrap
+          ansible_become: true
+          ansible_ssh_private_key_file: "~/.ssh/id_rsa"
+
+    # ── Contrôleur de domaine Active Directory (Windows Server 2022) ─────────
     active_directory:
       hosts:
-        ad-dc1:
-          ansible_host: 192.168.1.51
+        dc01:
+          ansible_host: "192.168.1.20"       # → terraform output dc01_ip
           ansible_user: Administrator
+          ansible_password: "{{ vault_windows_admin_password }}"
           ansible_connection: winrm
-          ansible_winrm_transport: ntlm
-          ansible_port: 5986
-          ansible_winrm_server_cert_validation: ignore
+          ansible_winrm_scheme: https
+          ansible_winrm_port: 5986
+          ansible_winrm_transport: ntlm      # NTLM = pas de domaine requis avant promotion
+          ansible_winrm_server_cert_validation: ignore   # cert auto-signé Packer
+          ansible_winrm_operation_timeout_sec: 120
+          ansible_winrm_read_timeout_sec: 150

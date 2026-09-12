@@ -1,0 +1,70 @@
+---
+# Valeurs par défaut — surchargées dans group_vars/all.yml pour la vraie config.
+
+# Suffixe DN dérivé du domaine (ex: "acme.lab" → "DC=acme,DC=lab")
+# Utilisé comme base pour toutes les OUs.
+ad_dc: "{{ ad_domain_name.split('.') | map('regex_replace', '^(.*)$', 'DC=\\1') | join(',') }}"
+
+# Nom de l'OU racine de l'entreprise (hérite de company_name si défini)
+ad_ou_company: "{{ company_name | default('PME') | upper }}"
+
+# Structure d'OUs enfants créées sous OU=<company>
+ad_ou_children:
+  - name: "Utilisateurs"
+    description: "Comptes utilisateurs du domaine"
+  - name: "Ordinateurs-Postes"
+    description: "Postes de travail joints au domaine"
+  - name: "Serveurs"
+    description: "Serveurs membres du domaine"
+  - name: "Groupes"
+    description: "Groupes de sécurité et de distribution"
+
+# Groupes de sécurité à créer (scope: global, category: security)
+ad_groups:
+  - name: "GRP-Admins-SI"
+    description: "Administrateurs Système d'Information"
+    ou: "Groupes"
+  - name: "GRP-Utilisateurs"
+    description: "Utilisateurs standard du domaine"
+    ou: "Groupes"
+  - name: "GRP-Direction"
+    description: "Direction générale — accès étendu aux ressources"
+    ou: "Groupes"
+  - name: "GRP-Informatique"
+    description: "Équipe informatique interne"
+    ou: "Groupes"
+
+# Utilisateurs à créer (remplacer les mots de passe en prod via vault)
+# password_never_expires: true pour les comptes de service
+ad_users:
+  - firstname: "Admin"
+    lastname: "SI"
+    username: "admin.si"
+    password: "Admin@P@ssw0rd!"
+    ou: "Utilisateurs"
+    groups:
+      - "GRP-Admins-SI"
+      - "GRP-Informatique"
+    description: "Compte administrateur SI — accès total"
+    password_never_expires: true
+
+  - firstname: "Jean"
+    lastname: "Dupont"
+    username: "jean.dupont"
+    password: "User@P@ssw0rd!"
+    ou: "Utilisateurs"
+    groups:
+      - "GRP-Utilisateurs"
+    description: "Utilisateur exemple — service commercial"
+    password_never_expires: false
+
+  - firstname: "Marie"
+    lastname: "Martin"
+    username: "marie.martin"
+    password: "User@P@ssw0rd!"
+    ou: "Utilisateurs"
+    groups:
+      - "GRP-Utilisateurs"
+      - "GRP-Direction"
+    description: "Utilisateur exemple — direction"
+    password_never_expires: false
