@@ -135,7 +135,8 @@ module "ad_dc1" {
   gateway        = var.ad_vm.gateway
   bridge         = var.network_bridge
   datastore      = var.datastore
-  ssh_public_key = var.ssh_public_key
+  ssh_public_key = ""         # cloudbase-init gère l'initialisation Windows
+  is_windows     = true
   tags           = ["bootstrap-pme", "active-directory"]
 }
 
