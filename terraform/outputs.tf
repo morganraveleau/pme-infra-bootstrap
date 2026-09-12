@@ -15,3 +15,8 @@ output "debian12_template_id" {
 
 # TODO : une fois l'inventaire Ansible dynamique en place, générer
 # ansible/inventory/hosts.yml directement depuis ces outputs (local_file + templatefile).
+
+output "windows_server_2022_iso_filename" {
+  description = "Nom du fichier ISO Windows Server 2022 téléchargé dans Proxmox (utilisé par packer-build.sh)"
+  value       = proxmox_download_file.windows_server_2022_iso.file_name
+}

@@ -138,3 +138,17 @@ module "ad_dc1" {
   ssh_public_key = var.ssh_public_key
   tags           = ["bootstrap-pme", "active-directory"]
 }
+
+# ---------------------------------------------------------------------------
+# ÉTAPE 0 — Télécharger l'ISO Windows Server 2022 Evaluation sur Proxmox
+# Proxmox va lui-même chercher l'ISO sur les serveurs Microsoft (~5.4 Go).
+# Déclenché par packer-build.sh via : terraform apply -target=...
+# ---------------------------------------------------------------------------
+resource "proxmox_download_file" "windows_server_2022_iso" {
+  content_type        = "iso"
+  datastore_id        = "local"
+  node_name           = var.pm_node
+  url                 = var.windows_iso_url
+  file_name           = "Windows_Server_2022_x64_EN_Eval.iso"
+  overwrite_unmanaged = true
+}

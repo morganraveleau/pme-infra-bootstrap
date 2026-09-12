@@ -88,3 +88,16 @@ variable "ad_vm" {
     gateway     = string
   })
 }
+
+# --- ISO Windows Server 2022 ---
+
+variable "windows_iso_url" {
+  description = <<-EOT
+    URL directe de l'ISO Windows Server 2022 Evaluation (en-US, ~5.4 Go).
+    Proxmox télécharge l'ISO directement — aucun upload manuel nécessaire.
+    Si l'URL est expirée, récupérer le lien actuel sur :
+    https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2022
+  EOT
+  type    = string
+  default = "https://software-static.download.prss.microsoft.com/sg/download/888969d5-f34g-4e03-ac9d-1f9786c66751/SERVER_EVAL_x64FRE_en-us.iso"
+}
